@@ -1,52 +1,249 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+    <title>reveal.js</title>
 
-		<link rel="stylesheet" href="css/reset.css">
-		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
-		<link rel="stylesheet" href="css/theme/black.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/theme/black.css">
 
-		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="lib/css/monokai.css">
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/monokai.css">
 
-		<!-- Printing and PDF exports -->
-		<script>
-			var link = document.createElement( 'link' );
-			link.rel = 'stylesheet';
-			link.type = 'text/css';
-			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
-			document.getElementsByTagName( 'head' )[0].appendChild( link );
-		</script>
-	</head>
-	<body>
-		<div class="reveal">
-			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
-			</div>
-		</div>
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section><h1>State Management in React</h1></section>
 
-		<script src="js/reveal.js"></script>
+        <section>
+          <h1> Single Source of Truth </h1>
+          <ul>
+            <li class="fragment">One value</li>
+            <li class="fragment">Components receives the value as props</li>
+            <li class="fragment">Components can <em>request</em> updates using events</li>
+            <li class="fragment">If more components need access, we <em>lift the state up</em></li>
+            <li class="fragment">Context API can help make state accessible</li>
+          </ul>
+        </section>
+        <section>
+          <h1>Redux</h1>
+          <p>
+          Helps lifting state up. Useful scenarios:
+          </p>
+          <ul>
+            <li>Interaction between many components</li>
+            <li>Complex state management
+              <ul>
+                <li>Asynchronous code</li>
+                <li>WebSocket push</li>
+              </ul>
+            </li>
+          </ul>
+          <p>
+          <small>Not all parts needs to be maintained by redux</small>
+          </p>
+        </section>
+        <section>
+          <section>
+            <h1>Redux components</h1>
+            <ul>
+              <li class="fragment">Primary<ul>
+                  <li>Store</li>
+                  <li>Actions</li>
+                  <li>Reducers</li>
+                </ul>
+              </li>
+              <li class="fragment">Secondary (but just as important)
+                <ul>
+                  <li>Action Creators</li>
+                  <li>Selectors</li>
+                </ul>
+              </li>
+          </section>
+          <section>
+            <h1>Actions</h1>
+            Immutable piece of data representing a desired change.
+            <pre><code data-trim data-noescape class="javascript">
+              {
+                // Type is the only required property
+                type: "SET_FINE_TUNING_GAIN",
+                earSide: "left",
+                channelNo: 3,
+                fineTuning: "+4dB"
+              }
+            </code></pre>
+          </section>
+          <section>
+            <h1>Reducers</h1>
+            Calculates how an action affects the state tree
+            <pre><code data-trim data-noescape class="javascript">
+              const reduce = (state = initialState, action) => {
+                switch(action.type) {
+                  case "SET_FINE_TUNING_GAIN":
+                    const { channelNo, earSide, fineTuning } = action;
+                    // Copy the array to keep data immutable
+                    const channelsCopy = state[earSide].slice();
+                    channelsCopy[action.channel] = { ...channelsCopy[action.channel], fineTuningGain }
 
-		<script>
-			// More info about config & dependencies:
-			// - https://github.com/hakimel/reveal.js#configuration
-			// - https://github.com/hakimel/reveal.js#dependencies
-			Reveal.initialize({
-				history: true,
-				hash: true,
-				dependencies: [
-					{ src: 'plugin/markdown/marked.js' },
-					{ src: 'plugin/markdown/markdown.js' },
-					{ src: 'plugin/highlight/highlight.js' },
-					{ src: 'plugin/notes/notes.js', async: true }
-				]
-			});
-		</script>
-	</body>
+                    // Return a copy of the initial state, with the modifications applied
+                    return { ...state, [earSide]: channelsCopy }
+                  case "RESET_FINE_TUNING": ...
+                  default:
+                    // A different action was dispatched, return unmodified state
+                    return state;
+                }
+              }
+            </code></pre>
+            <small class="fragment">Helper libraries exist to simplify this</small>
+          </section>
+          <section>
+            <h1>Complex reducers</h1>
+            <pre><code data-trim data-noescape class="javascript">
+              const fooReducer = (state = { bazFoo: null }, action) => state;
+              const barReducer = (state = { bazBar: null }, action) => state;
+
+              const rootReduxer = combineReducers({
+                foo: fooReducer,
+                bar: barReducer
+              })
+
+              // State tree will look like this
+              { foo: { // This bit maintained by foo reducer
+                  bazFoo: null
+                },
+                bar: { // This bit maintained by bar reducer
+                  bazBar: null
+                } }
+            </code></pre>
+          </section>
+          <section>
+            <h1>Store</h1>
+            <pre><code data-trim data-noescape class="javascript">
+              const store = createStore(rootReducer)
+
+              // Dispatch actions
+              store.dispatch({ type: "RESET_FINE_TUNINGS" });
+              // This will emit events when the state changes
+
+              // Read the state
+              store.getState();
+            </code></pre>
+          </section>
+          <section>
+            <h1>Action Creators</h1>
+            Functions that return actions
+            <pre><code data-trim data-noescape class="javascript">
+              const resetFineTunings = () => {
+                return {
+                  type: "RESET_FINE_TUNINGS"
+                }
+              }
+
+              const setFineTuningGains = (side: "left"|"right",
+                  channelNo: number, fineTuning: string) => {
+                return {
+                  type: "SET_FINE_TUNING_GAIN",
+                  earSide, channelNo, fineTuning
+                }
+              }
+            </code></pre>
+          </section>
+          <section>
+            <h1>Selectors</h1>
+            Functions that retrieve bits of state
+            <pre><code data-trim data-noescape class="javascript">
+              const getFineTuningGain = (state: RootState) =>
+                state.hearingProfileFitting.fineTuning;
+            </code></pre>
+            <small>
+              Selectors are not necessary, but makes the state tree easier to
+              refactor.
+            </small>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h1>Advanced behavior</h1>
+            <ul>
+              <li>Middlewares can customize redux behavior</li>
+              <li>Logging middleware produces advanced logging</li>
+              <li>Thunk middleware handles async behavior</li>
+              <li>Support for RxJS, Sagas, and more</li>
+            </ul>
+          </section>
+          <section>
+            <h1>Thunk middleware</h1>
+            Allows creatins async <em>Action Creators</em>
+            <pre><code data-trim data-noescape class="javascript">
+              const loadFineTuningGains =
+                (patientId) => async (dispatch /* optional: , getState */) =>
+              {
+                dispatch(setLoadingState());
+                try {
+                  const fineTuning = fineTuningService.getFineTuningGains(patientId);
+                  dispatch(setFineTuningLoaded(fineTuning));
+                } catch (e) {
+                  dispatch(setFineTuningLoadFailed(e));
+                }
+              }
+
+              // "dispatch" returns a Promise for thunk action creators
+              await store.dispatch(loadFineTuningGains("PATIENT_ID"));
+            </code></pre>
+          </section>
+        </section>
+        <section>
+          <h1>Alternatives</h1>
+          <ul>
+            <li>Flux. Predecessor to Redux. Redux created to deal with problems in Flux</li>
+            <li>mobx - Mutable data</li>
+            <li>
+              mobx-state-tree - Build on top of mobx, with immutable snapshots.
+              need ES7 decorators?, which isn't supported by CRA (AFAIK)</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Links</h2>
+          <ul>
+            <li>Lifting state up:
+              <a href="https://reactjs.org/docs/lifting-state-up.html">
+                https://reactjs.org/docs/lifting-state-up.html</a></li>
+            <li>Redux toolkit:
+              <a href="https://redux-toolkit.js.org/"> https://redux-toolkit.js.org/ </a></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+
+    <script src="js/reveal.js"></script>
+
+    <script>
+      // More info about config & dependencies:
+      // - https://github.com/hakimel/reveal.js#configuration
+      // - https://github.com/hakimel/reveal.js#dependencies
+      Reveal.initialize({
+        history: true,
+        hash: true,
+        dependencies: [
+          { src: 'plugin/markdown/marked.js' },
+          { src: 'plugin/markdown/markdown.js' },
+          { src: 'plugin/highlight/highlight.js', async: true },
+          { src: 'plugin/notes/notes.js', async: true }
+        ]
+      });
+    </script>
+  </body>
 </html>
