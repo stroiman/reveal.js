@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="css/reset.css">
     <link rel="stylesheet" href="css/reveal.css">
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/theme/black.css">
+    <link rel="stylesheet" href="css/theme/simple.css">
 
     <!-- Theme used for syntax highlighting of code -->
     <link rel="stylesheet" href="lib/css/monokai.css">
@@ -22,6 +22,19 @@
       link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
       document.getElementsByTagName( 'head' )[0].appendChild( link );
     </script>
+
+    <!-- Mermaid -->
+    <link rel="stylesheet" href="node_modules/mermaid/dist/mermaid.css">
+    <script src="node_modules/mermaid/dist/mermaid.js"></script>
+    <style>
+.reveal .diagram-display {
+  padding: 0;
+  margin: 0;
+  min-height: 700px;
+  min-width:100%;
+  height:auto;
+}
+    </style>
   </head>
   <body>
     <div class="reveal">
@@ -29,17 +42,33 @@
         <section><h1>State Management in React</h1></section>
 
         <section>
-          <h1> Single Source of Truth </h1>
-          <ul>
-            <li class="fragment">One value</li>
-            <li class="fragment">Components receives the value as props</li>
-            <li class="fragment">Components can <em>request</em> updates using events</li>
-            <li class="fragment">If more components need access, we <em>lift the state up</em></li>
-            <li class="fragment">Context API can help make state accessible</li>
-          </ul>
+          <section>
+            <h2> Single Source of Truth </h2>
+            <ul>
+              <li class="fragment">One value</li>
+              <li class="fragment">Components receives the value as props</li>
+              <li class="fragment">Components can <em>request</em> updates using events</li>
+              <li class="fragment">If more components need access, we <em>lift the state up</em></li>
+              <li class="fragment">Context API can help make state accessible</li>
+            </ul>
+          </section>
+          <section class="diagram-slide">
+            <span class="diagram-data" style="display:none;">
+              graph TB;
+              A(AAAA)==> B(B node);
+              B==> C(SEE SEE);
+
+              class A diag-a-styles;
+              class B diag-b-styles
+              class C diag-c-styles;
+            </span>
+            <!-- Diagram will be displayed in this DIV -->
+            <div class="diagram-display">
+            </div>
+          </section>
         </section>
         <section>
-          <h1>Redux</h1>
+          <h2>Redux</h2>
           <p>
           Helps lifting state up. Useful scenarios:
           </p>
@@ -58,7 +87,7 @@
         </section>
         <section>
           <section>
-            <h1>Redux components</h1>
+            <h2>Redux components</h2>
             <ul>
               <li class="fragment">Primary<ul>
                   <li>Store</li>
@@ -74,7 +103,7 @@
               </li>
           </section>
           <section>
-            <h1>Actions</h1>
+            <h2>Actions</h2>
             Immutable piece of data representing a desired change.
             <pre><code data-trim data-noescape class="javascript">
               {
@@ -87,7 +116,7 @@
             </code></pre>
           </section>
           <section>
-            <h1>Reducers</h1>
+            <h2>Reducers</h2>
             Calculates how an action affects the state tree
             <pre><code data-trim data-noescape class="javascript">
               const reduce = (state = initialState, action) => {
@@ -110,7 +139,7 @@
             <small class="fragment">Helper libraries exist to simplify this</small>
           </section>
           <section>
-            <h1>Complex reducers</h1>
+            <h2>Complex reducers</h2>
             <pre><code data-trim data-noescape class="javascript">
               const fooReducer = (state = { bazFoo: null }, action) => state;
               const barReducer = (state = { bazBar: null }, action) => state;
@@ -130,7 +159,7 @@
             </code></pre>
           </section>
           <section>
-            <h1>Store</h1>
+            <h2>Store</h2>
             <pre><code data-trim data-noescape class="javascript">
               const store = createStore(rootReducer)
 
@@ -143,7 +172,7 @@
             </code></pre>
           </section>
           <section>
-            <h1>Action Creators</h1>
+            <h2>Action Creators</h2>
             Functions that return actions
             <pre><code data-trim data-noescape class="javascript">
               const resetFineTunings = () => {
@@ -162,7 +191,7 @@
             </code></pre>
           </section>
           <section>
-            <h1>Selectors</h1>
+            <h2>Selectors</h2>
             Functions that retrieve bits of state
             <pre><code data-trim data-noescape class="javascript">
               const getFineTuningGain = (state: RootState) =>
@@ -176,7 +205,7 @@
         </section>
         <section>
           <section>
-            <h1>Advanced behavior</h1>
+            <h2>Advanced behavior</h2>
             <ul>
               <li>Middlewares can customize redux behavior</li>
               <li>Logging middleware produces advanced logging</li>
@@ -185,7 +214,7 @@
             </ul>
           </section>
           <section>
-            <h1>Thunk middleware</h1>
+            <h2>Thunk middleware</h2>
             Allows creatins async <em>Action Creators</em>
             <pre><code data-trim data-noescape class="javascript">
               const loadFineTuningGains =
@@ -206,7 +235,7 @@
           </section>
         </section>
         <section>
-          <h1>Alternatives</h1>
+          <h2>Alternatives</h2>
           <ul>
             <li>Flux. Predecessor to Redux. Redux created to deal with problems in Flux</li>
             <li>mobx - Mutable data</li>
@@ -223,7 +252,18 @@
                 https://reactjs.org/docs/lifting-state-up.html</a></li>
             <li>Redux toolkit:
               <a href="https://redux-toolkit.js.org/"> https://redux-toolkit.js.org/ </a></li>
-          </ul>
+            <li>Dan Abramovs courses (pre react hooks API):
+              <ul><li><a href="https://egghead.io/courses/getting-started-with-redux">
+                    https://egghead.io/courses/getting-started-with-redux</a></li>
+                <li><a href="https://egghead.io/courses/building-react-applications-with-idiomatic-redux">
+                    https://egghead.io/courses/building-react-applications-with-idiomatic-redux</a></li>
+              </ul>
+            </li>
+            <li>
+              Dan Abramov - Live React: Hot Reloading with Time Travel at react-europe 2015
+              <a href="https://www.youtube.com/watch?v=xsSnOQynTHs">
+                https://www.youtube.com/watch?v=xsSnOQynTHs</a>
+            </li>
         </section>
       </div>
     </div>
@@ -241,7 +281,8 @@
           { src: 'plugin/markdown/marked.js' },
           { src: 'plugin/markdown/markdown.js' },
           { src: 'plugin/highlight/highlight.js', async: true },
-          { src: 'plugin/notes/notes.js', async: true }
+          { src: 'plugin/notes/notes.js', async: true },
+          { src: 'plugin/mermaid/mermaid.js' }
         ]
       });
     </script>
