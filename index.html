@@ -45,26 +45,45 @@
           <section>
             <h2> Single Source of Truth </h2>
             <ul>
-              <li class="fragment">One value</li>
-              <li class="fragment">Components receives the value as props</li>
-              <li class="fragment">Components can <em>request</em> updates using events</li>
-              <li class="fragment">If more components need access, we <em>lift the state up</em></li>
-              <li class="fragment">Context API can help make state accessible</li>
+              <li class="fragment">One single source for any independent data</li>
+              <li class="fragment">Input elements use controlled components</li>
+              <li class="fragment">If more components need access, we <em>lift the state up</em>
+                <ul>
+                  <li class="fragment">Components receives the value as props</li>
+                  <li class="fragment">Components can <em>request</em> updates using events</li>
+                </ul>
+              </li>
             </ul>
           </section>
           <section class="diagram-slide">
-            <span class="diagram-data" style="display:none;">
-              graph TB;
-              A(AAAA)==> B(B node);
-              B==> C(SEE SEE);
+            <h2>Controlled component</h2>
+            <pre><code data-trim data-noescape class="javascript">const MarkdownEditField = () =&gt; {
+  const [ value, setValue ] = useState("Initial value");
+  const onChange = (e) =&gt; { setValue(e.target.value); };
 
-              class A diag-a-styles;
-              class B diag-b-styles
-              class C diag-c-styles;
-            </span>
-            <!-- Diagram will be displayed in this DIV -->
-            <div class="diagram-display">
-            </div>
+  return (
+    &lt;textarea value={value} onChange={onChange} /&gt;
+  );
+}
+            </code></pre>
+          </section>
+          <section class="diagram-slide">
+            <h2>State lifted up</h2>
+            <pre><code data-trim data-noescape class="javascript">const MarkdownEditField = ({value, onValueChange}: MarkdownFieldProps) =&gt; {
+  const onChange = (e) =&gt; { onValueChange(e.target.value); };
+  return (
+    &lt;textarea value={state} onChange={onChange} /&gt;
+  );
+}
+
+const MarkdownWithPreview = () =&gt; {
+  const [ value, setValue ] = useState("");
+  return (
+    &lt;MarkdownEditField value={value} onValueChange={setValue} &gt;
+    &lt;MarkdownPreview value={value} &gt;
+  )
+}
+            </code></pre>
           </section>
         </section>
         <section>
@@ -109,9 +128,11 @@
               {
                 // Type is the only required property
                 type: "SET_FINE_TUNING_GAIN",
-                earSide: "left",
-                channelNo: 3,
-                fineTuning: "+4dB"
+                payload: { // Wrapping data in payload is a _recommendation_
+                  earSide: "left",
+                  channelNo: 3,
+                  fineTuning: "+4dB"
+                }
               }
             </code></pre>
           </section>
@@ -139,7 +160,7 @@
             <small class="fragment">Helper libraries exist to simplify this</small>
           </section>
           <section>
-            <h2>Complex reducers</h2>
+            <h2>Composing Reducers</h2>
             <pre><code data-trim data-noescape class="javascript">
               const fooReducer = (state = { bazFoo: null }, action) => state;
               const barReducer = (state = { bazBar: null }, action) => state;
@@ -155,7 +176,7 @@
                 },
                 bar: { // This bit maintained by bar reducer
                   bazBar: null
-                } }
+              } }
             </code></pre>
           </section>
           <section>
@@ -185,7 +206,7 @@
                   channelNo: number, fineTuning: string) => {
                 return {
                   type: "SET_FINE_TUNING_GAIN",
-                  earSide, channelNo, fineTuning
+                  payload: { earSide, channelNo, fineTuning }
                 }
               }
             </code></pre>
@@ -201,6 +222,65 @@
               Selectors are not necessary, but makes the state tree easier to
               refactor.
             </small>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h1>React Redux Bindings</h1>
+          </section>
+          <section>
+            <h4>Create a <code>Provider</code></h4>
+
+            <pre><code data-trim data-noescape class="react">
+                // App.tsx or Root.tsx, or some parent component
+                import { createStore } from 'redux'
+                import { Provider } from 'react-redux';
+
+                const store = createStore(rootReducer);
+
+                export default () => {
+                  &lt;Provider store={store}&gt;
+                    &ltApp /&gt;
+                  &lt;/Provider&gt;
+                }
+            </code></pre>
+          </section>
+          <section>
+            <h4>Classic</h4>
+            Uses <code>connect</code> from <code>react-redux</code>
+            <pre><code data-trim data-noescape class="javascript">
+              const UnconnectedComponent = ({ value, onValueChange }) => {
+                const onChange = (e) => {
+                  onValueChange(e.target.value);
+                }
+                return (&lt;textarea value={value} onChange={onChange} /&gt;)
+              }
+
+              const mapStateToProps = (state /*, ownProps */) => ({
+                value: selectors.getValue(state)
+              })
+
+              export default connect(
+                mapStateToProps, {
+                    onChange: actions.updateValue
+                })(UnconnectedComponent)
+            </code></pre>
+          </section>
+          <section>
+            <h4>Hooks version</h4>
+            <pre><code data-trim data-noescape class="javascript">
+            import { useDispatch, useSelector } from 'react-redux';
+
+            export default () => {
+              const dispatch = useDispatch();
+              const value = useSelector(selectors.getValue)
+              const onChange = (e) => {
+                dispatch(actions.updateValue(e.target.value))
+              }
+              return (&lt;textarea value={value} onChange={onChange} /&gt;)
+            }
+            </code></pre>
+            <p class="fragment">Less code, but more difficult to test</p>
           </section>
         </section>
         <section>
@@ -235,24 +315,134 @@
           </section>
         </section>
         <section>
-          <h2>Alternatives</h2>
-          <ul>
-            <li>Flux. Predecessor to Redux. Redux created to deal with problems in Flux</li>
-            <li>mobx - Mutable data</li>
-            <li>
-              mobx-state-tree - Build on top of mobx, with immutable snapshots.
-              need ES7 decorators?, which isn't supported by CRA (AFAIK)</li>
-          </ul>
+          <section>
+            <h1>Writing Tests</h1>
+            Avoid official test guidelines
+          </section>
+          <section>
+            <h2>Test Store as a Whole</h2>
+            <ul>
+              <li>Create a store in test code</li>
+              <li>Dispatch Actions using Action Creators</li>
+              <li>Veridy state using Selectors</li>
+              <li>Tests now facilitate refactoring</li>
+            </ul>
+          </section>
+          <section>
+            <h2>Example</h2>
+            <pre><code data-trim data-noescape class="javascript">
+                describe("Some piece of data", () => {
+                  it("Has initial state 'foo'", () => {
+                    const store = createStore();
+                    const actual = selectors.getData(store.getState())
+                    actual.should.equal('foo')
+                  })
+                  it("Has state 'bar' after update", () => {
+                    const store = createStore();
+                    store.dispatch(actions.doBar());
+                    const actual = selectors.getData(store.getState())
+                    actual.should.equal('bar')
+                  })
+                })
+            </code></pre>
+          </section>
+          <section>
+            <h2>Helpers in FixXP</h2>
+            <pre><code data-trim data-noescape class="javascript">
+              describe("This thing", useStore({ dispatch, select }, () => {
+                  it("Has initial state 'foo'", () => {
+                    const actual = select(selectors.getData)
+                    actual.should.equal('foo')
+                  })
+                  it("Has state 'bar' after update", () => {
+                    dispatch(actions.doBar());
+                    const actual = select(selectors.getData)
+                    actual.should.equal('bar')
+                  })
+              }));
+            </code></pre>
+          </section>
+          <section>
+            <h2>Testing Async Code</h2>
+            <pre><code data-trim data-noescape class="javascript">
+                  beforeEach(() => { stub = sinon.stub(api, 'doSomething') });
+
+                  it("While loading", () => {
+                    stub.returns(new Promise(r => {}));
+                    dispatch(actions.doSomethingAsync());
+                    const actual = select(selectors.getStatus)
+                    actual.should.equal('LOADING')
+                  })
+                  it("When loaded", async () => {
+                    stub.resolve(createValidResponse());
+                    await dispatch(actions.doSomethingAsync());
+                    const actual = select(selectors.getStatus)
+                    actual.should.equal('LOADED')
+                  })
+            </code></pre>
+          </section>
+          <section>
+            <h2>Testing Race Conditions</h2>
+            <pre><code data-trim data-noescape class="javascript">
+              it("Handles responses out of order", () => {
+                const clock = sinon.useFakeTimers();
+                const stub = sinon.stub(api, 'doSomething')
+                stub.withArgs("PATIENT_1")
+                    .returns(new Promise(r => { setTimeout(r, 2) }));
+                stub.withArgs("PATIENT_2")
+                    .returns(new Promise(r => { setTimeout(r, 1) }));
+                await Promise.all([
+                  dispatch(actions.loadPatient("PATIENT_1")),
+                  dispatch(actions.loadPatient("PATIENT_2")),
+                  clock.tick(2)
+                ])
+                // Patient who was requested last will be received first
+                select(selectors.getPatientId).should.equal("PATIENT_2")
+              })
+            </code></pre>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h2>Tips</h2>
+            <ul>
+              <li>Components rerender when selected data change</li>
+              <li>Selectors <em>should</em> return <em>equal</em> for same input</li>
+              <li>The <code>useRedux</code> helper's <code>select</code> function verifies this</li>
+              <li><code>reselect</code> library helps create memoized selectors</li>
+            </ul>
+          </section>
+          <section>
+            <h2>Using Reselect</h2>
+            <pre><code data-trim data-noescape class="javascript">
+              // When called twice, this will not return equal results for same
+              // input, forcing unnecessary rerenders.
+              const badVersion = (state: RootState) => {
+                const x = state.substate.data1,
+                const y = state.substate.data2,
+                const z = state.substate.data3,
+                return { x, y, z }
+              )
+              // Good version - createSelector creates a memoized version
+              const complexSelectorThatCalculatesState = createSelector(
+                state => state.substate.data1,
+                state => state.substate.data2,
+                state => state.substate.data3,
+                (data1, data2, data3) => ({ x: data1, y: data2, z: data3 })
+              )
+            </code></pre>
+          </section>
         </section>
         <section>
           <h2>Links</h2>
           <ul>
+            <li><a href="https://reactjs.org/docs/forms.html#controlled-components">Controlled Components</a></li>
             <li>Lifting state up:
               <a href="https://reactjs.org/docs/lifting-state-up.html">
                 https://reactjs.org/docs/lifting-state-up.html</a></li>
             <li>Redux toolkit:
               <a href="https://redux-toolkit.js.org/"> https://redux-toolkit.js.org/ </a></li>
-            <li>Dan Abramovs courses (pre react hooks API):
+            <li>Dan Abramovs courses (pre react hooks API &amp; no typescript):
               <ul><li><a href="https://egghead.io/courses/getting-started-with-redux">
                     https://egghead.io/courses/getting-started-with-redux</a></li>
                 <li><a href="https://egghead.io/courses/building-react-applications-with-idiomatic-redux">
