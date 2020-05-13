@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <title>reveal.js</title>
+    <title>State Management in React</title>
 
     <link rel="stylesheet" href="css/reset.css">
     <link rel="stylesheet" href="css/reveal.css">
@@ -87,13 +87,14 @@ const MarkdownWithPreview = () =&gt; {
           </section>
         </section>
         <section>
-          <h2>Redux</h2>
+          <section>
+            <h2>Redux</h2>
           <p>
           Helps lifting state up. Useful scenarios:
           </p>
           <ul>
-            <li>Interaction between many components</li>
-            <li>Complex state management
+            <li class="fragment">Interaction between many components</li>
+            <li class="fragment">Complex state management
               <ul>
                 <li>Asynchronous code</li>
                 <li>WebSocket push</li>
@@ -101,10 +102,24 @@ const MarkdownWithPreview = () =&gt; {
             </li>
           </ul>
           <p>
-          <small>Not all parts needs to be maintained by redux</small>
           </p>
         </section>
         <section>
+          <h2>Avoid redux for</h2>
+          <p>
+          <small>Not all state needs to be maintained by redux</small>
+        </p>
+          <ul>
+            <li class="fragment">Ephemeral state, e.g.
+              <ul>
+                <li>Form field values</li>
+              </ul>
+            </li>
+            <li class="fragment">State that could more easily be maintained locally.</li>
+          </ul>
+          </section>
+      </section>
+      <section>
           <section>
             <h2>Redux components</h2>
             <ul>
@@ -138,26 +153,24 @@ const MarkdownWithPreview = () =&gt; {
           </section>
           <section>
             <h2>Reducers</h2>
-            Calculates how an action affects the state tree
+            <em>Pure</em> function to calculate new state
             <pre><code data-trim data-noescape class="javascript">
               const reduce = (state = initialState, action) => {
                 switch(action.type) {
                   case "SET_FINE_TUNING_GAIN":
                     const { channelNo, earSide, fineTuning } = action;
                     // Copy the array to keep data immutable
-                    const channelsCopy = state[earSide].slice();
-                    channelsCopy[action.channel] = { ...channelsCopy[action.channel], fineTuningGain }
-
+                    const channelsCopy = [...state[earSide]];
+                    channelsCopy[action.channel] = fineTuningGain
                     // Return a copy of the initial state, with the modifications applied
                     return { ...state, [earSide]: channelsCopy }
                   case "RESET_FINE_TUNING": ...
-                  default:
-                    // A different action was dispatched, return unmodified state
-                    return state;
+                  // A different action was dispatched, return unmodified state
+                  default: return state;
                 }
               }
             </code></pre>
-            <small class="fragment">Helper libraries exist to simplify this</small>
+            <small class="fragment"><em>immer</em> and <em>redux toolkit</em> can help to simplify this</small>
           </section>
           <section>
             <h2>Composing Reducers</h2>
@@ -216,7 +229,7 @@ const MarkdownWithPreview = () =&gt; {
             Functions that retrieve bits of state
             <pre><code data-trim data-noescape class="javascript">
               const getFineTuningGain = (state: RootState) =>
-                state.hearingProfileFitting.fineTuning;
+                state.hearingProfileFitting.fineTuning.gains;
             </code></pre>
             <small>
               Selectors are not necessary, but makes the state tree easier to
@@ -246,7 +259,7 @@ const MarkdownWithPreview = () =&gt; {
             </code></pre>
           </section>
           <section>
-            <h4>Classic</h4>
+            <h4>Classic Style</h4>
             Uses <code>connect</code> from <code>react-redux</code>
             <pre><code data-trim data-noescape class="javascript">
               const UnconnectedComponent = ({ value, onValueChange }) => {
@@ -295,7 +308,7 @@ const MarkdownWithPreview = () =&gt; {
           </section>
           <section>
             <h2>Thunk middleware</h2>
-            Allows creatins async <em>Action Creators</em>
+            Allows creating async <em>Action Creators</em>
             <pre><code data-trim data-noescape class="javascript">
               const loadFineTuningGains =
                 (patientId) => async (dispatch /* optional: , getState */) =>
@@ -407,8 +420,8 @@ const MarkdownWithPreview = () =&gt; {
             <h2>Tips</h2>
             <ul>
               <li>Components rerender when selected data change</li>
-              <li>Selectors <em>should</em> return <em>equal</em> for same input</li>
-              <li>The <code>useRedux</code> helper's <code>select</code> function verifies this</li>
+              <li>Selectors <em>should</em> return <em>equal</em> values for same input</li>
+              <li>The <code>useStore</code> helper's <code>select</code> function verifies this</li>
               <li><code>reselect</code> library helps create memoized selectors</li>
             </ul>
           </section>
@@ -434,26 +447,37 @@ const MarkdownWithPreview = () =&gt; {
           </section>
         </section>
         <section>
-          <h2>Links</h2>
+          <section>
+            <h2>Links</h2>
           <ul>
-            <li><a href="https://reactjs.org/docs/forms.html#controlled-components">Controlled Components</a></li>
+            <li>Redux Site: <a href="https://redux.js.org/">https://redux.js.org/</a><ul>
+              <li>Style Guide: <a href="https://redux.js.org/style-guide/style-guide">https://redux.js.org/style-guide/style-guide</a></li>
+
+            </ul></li>
+            <li>Controlled Components: <br /><a href="https://reactjs.org/docs/forms.html#controlled-components">https://reactjs.org/docs/forms.html#controlled-components</a></li>
             <li>Lifting state up:
               <a href="https://reactjs.org/docs/lifting-state-up.html">
                 https://reactjs.org/docs/lifting-state-up.html</a></li>
             <li>Redux toolkit:
               <a href="https://redux-toolkit.js.org/"> https://redux-toolkit.js.org/ </a></li>
-            <li>Dan Abramovs courses (pre react hooks API &amp; no typescript):
-              <ul><li><a href="https://egghead.io/courses/getting-started-with-redux">
-                    https://egghead.io/courses/getting-started-with-redux</a></li>
-                <li><a href="https://egghead.io/courses/building-react-applications-with-idiomatic-redux">
-                    https://egghead.io/courses/building-react-applications-with-idiomatic-redux</a></li>
-              </ul>
-            </li>
-            <li>
-              Dan Abramov - Live React: Hot Reloading with Time Travel at react-europe 2015
-              <a href="https://www.youtube.com/watch?v=xsSnOQynTHs">
-                https://www.youtube.com/watch?v=xsSnOQynTHs</a>
-            </li>
+          </section>
+          <section>
+            <h2>Links (Presentations)</h2>
+            <ul>
+              <li>
+                Dan Abramov - Live React: Hot Reloading with Time Travel at react-europe 2015
+                <a href="https://www.youtube.com/watch?v=xsSnOQynTHs">
+                  https://www.youtube.com/watch?v=xsSnOQynTHs</a>
+              </li>
+                <li>Dan Abramovs courses (pre react hooks API &amp; no typescript):
+                <ul><li><a href="https://egghead.io/courses/getting-started-with-redux">
+                      https://egghead.io/courses/getting-started-with-redux</a></li>
+                  <li><a href="https://egghead.io/courses/building-react-applications-with-idiomatic-redux">
+                      https://egghead.io/courses/building-react-applications-with-idiomatic-redux</a></li>
+                </ul>
+              </li>
+            </ul>
+          </section>
         </section>
       </div>
     </div>
